@@ -1,452 +1,490 @@
-import React, { useState } from 'react';
-import { Book, Gamepad2, Cpu, Music, Layers, Settings, ChevronRight, Save, Printer, Share2, Anchor, Target, Gift } from 'lucide-react';
-
-export default function GameDesignDoc() {
-  const [activeTab, setActiveTab] = useState('mechanics'); // Default open mechanics tab to show changes
-
-  // 根據使用者提供的《套圈圈》腳本更新資料
-  const scriptData = {
-    title: "專案代號：套圈圈 (Ring Toss)",
-    version: "v2.2.0 (禮品分級版)",
-    lastUpdated: "2024-05-22",
-    sections: {
-      overview: {
-        title: "1. 遊戲概述 (Overview)",
-        icon: <Book className="w-5 h-5" />,
-        content: (
-          <div className="space-y-6">
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-              <h3 className="font-bold text-blue-800 mb-2">核心玩法</h3>
-              <p className="text-blue-900">
-                本機台為「天車投擲式互動遊戲機」。玩家透過搖桿控制天車 X 軸移動，並利用「上拉慣性甩爪」的物理特性進行放圈。遊戲結合了夾娃娃機的操作手感與夜市套圈圈的準度挑戰。
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border p-4 rounded bg-white shadow-sm">
-                <h4 className="font-bold text-gray-700 mb-2">遊戲模式</h4>
-                <ul className="list-disc list-inside text-gray-600 space-y-1">
-                  <li><strong>A 模式 (一般)：</strong>自由投擲，依套中數量決定獎品等級。</li>
-                  <li><strong>B 模式 (挑戰)：</strong>需套中指定閃光桿位，成功即獲獎。</li>
-                </ul>
-              </div>
-              <div className="border p-4 rounded bg-white shadow-sm">
-                <h4 className="font-bold text-gray-700 mb-2">中獎桿配置 (共12支)</h4>
-                <div className="flex flex-col gap-2 mt-2">
-                   <div className="flex justify-center gap-1"><span className="px-2 py-1 bg-gray-200 rounded text-xs">上排 (5支)</span></div>
-                   <div className="flex justify-center gap-1"><span className="px-2 py-1 bg-gray-200 rounded text-xs">二排 (4支)</span></div>
-                   <div className="flex justify-center gap-1"><span className="px-2 py-1 bg-gray-200 rounded text-xs">三排 (3支)</span></div>
-                   <p className="text-xs text-gray-500 text-center mt-1">*每排獨立判定</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-      },
-      hardware: {
-        title: "2. 角色與硬體 (Hardware)",
-        icon: <Cpu className="w-5 h-5" />,
-        content: (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* 天車系統 */}
-              <div className="bg-gray-50 p-4 rounded border">
-                <div className="flex items-center gap-2 mb-2">
-                  <Anchor className="w-4 h-4 text-orange-500" />
-                  <h4 className="font-bold">天車系統 (Crane)</h4>
-                </div>
-                <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
-                  <li><strong>X 軸移動：</strong>玩家可控左右位移。</li>
-                  <li><strong>取物模組：</strong>搭載夾圈爪 或 電磁吸圈模組。</li>
-                  <li><strong>放圈機制：</strong>利用撞擊斜板/上檔產生慣性拋出。</li>
-                </ul>
-              </div>
-
-              {/* 玩家操作 */}
-              <div className="bg-gray-50 p-4 rounded border">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gamepad2 className="w-4 h-4 text-green-500" />
-                  <h4 className="font-bold">玩家操作 (Player)</h4>
-                </div>
-                <ul className="text-sm text-gray-600 list-disc list-inside space-y-1">
-                  <li><strong>搖桿：</strong>控制天車左右移動。</li>
-                  <li><strong>按鈕：</strong>確認放圈 (Trigger)。</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="border rounded-lg overflow-hidden mt-4">
-              <div className="bg-gray-100 p-3 border-b font-bold text-gray-700">物件定義</div>
-              <table className="w-full text-sm text-left">
-                <tbody>
-                  <tr className="border-b">
-                    <td className="p-3 bg-gray-50 font-bold w-1/4">圈圈 (Ring)</td>
-                    <td className="p-3">材質：金屬 (尺寸固定)。屬性：以磁吸為主，亦可規劃夾取。</td>
-                  </tr>
-                  <tr className="border-b">
-                    <td className="p-3 bg-gray-50 font-bold">中獎桿 (Pole)</td>
-                    <td className="p-3">數量 12 支。每一支桿子皆對應獨立的「記帳銀行」系統。</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )
-      },
-      gameplay: {
-        title: "3. 狀態流程 (State Flow)",
-        icon: <Layers className="w-5 h-5" />,
-        content: (
-          <div className="space-y-6">
-             {/* 流程圖概覽 */}
-             <div className="flex flex-wrap gap-2 text-xs text-gray-500 mb-4 justify-center bg-gray-50 p-2 rounded">
-                <span>IDLE</span> → <span>WAIT</span> → <span>READY</span> → <span>AIM</span> → <span>PICKUP</span> → <span>MOVE</span> → <span>DROP</span> → <span>JUDGE</span> → <span>RESULT</span> → <span>SETTLE</span>
-             </div>
-
-             <div className="space-y-4">
-                {/* IDLE & WAIT */}
-                <div className="relative pl-6 border-l-2 border-gray-300">
-                  <span className="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-gray-400"></span>
-                  <h5 className="font-bold text-gray-800">0-2. 待機與準備 (Idle & Ready)</h5>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <strong>IDLE:</strong> 顯示 LOGO，中獎桿呼吸燈閃爍，重置天車。<br/>
-                    <strong>WAIT_COIN:</strong> 偵測投幣，顯示操作提示。<br/>
-                    <strong>READY:</strong> 選擇模式 (A:一般 / B:挑戰)，玩家移動搖桿，播放開始音樂。
-                  </p>
-                </div>
-
-                {/* ACTION */}
-                <div className="relative pl-6 border-l-2 border-indigo-500">
-                  <span className="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-indigo-500"></span>
-                  <h5 className="font-bold text-indigo-900">3-6. 操作與動作 (Action)</h5>
-                  <div className="mt-2 space-y-3">
-                    <div className="bg-indigo-50 p-2 rounded text-sm">
-                      <span className="font-bold text-indigo-700">[3] AIMING 瞄準:</span> 
-                      <span className="text-gray-700 ml-1">限時 15秒。畫面顯示倒數條，音效配合天車移動。</span>
-                    </div>
-                    <div className="bg-indigo-50 p-2 rounded text-sm">
-                      <span className="font-bold text-indigo-700">[4] PICKUP 取圈:</span> 
-                      <span className="text-gray-700 ml-1">下爪夾取/吸取圈圈。畫面顯示特寫動畫。</span>
-                    </div>
-                    <div className="bg-indigo-50 p-2 rounded text-sm">
-                      <span className="font-bold text-indigo-700">[5] MOVE 上移:</span> 
-                      <span className="text-gray-700 ml-1">天車自動上移，畫面聚焦，播放緊張音效。</span>
-                    </div>
-                     <div className="bg-indigo-50 p-2 rounded text-sm">
-                      <span className="font-bold text-indigo-700">[6] DROP 丟圈:</span> 
-                      <span className="text-gray-700 ml-1">撞擊斜板/上檔 → 開閘門 → 利用慣性丟出圈圈。</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* RESULT */}
-                <div className="relative pl-6 border-l-2 border-orange-400">
-                  <span className="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-orange-400"></span>
-                  <h5 className="font-bold text-gray-800">7-10. 判定與結算 (Result)</h5>
-                  <p className="text-sm text-gray-600 mt-1">
-                    <strong>JUDGE:</strong> 500ms 判定時間窗，感測器偵測是否套中。<br/>
-                    <strong>RESULT:</strong> 中獎(亮燈/WIN動畫) 或 未中(保夾條更新/鼓勵音效)。<br/>
-                    <strong>SETTLE:</strong> 記錄金額，更新該桿銀行，判斷是否觸發保夾。
-                  </p>
-                </div>
-             </div>
-
-             {/* Mode B Special Flow */}
-             <div className="mt-8 pt-6 border-t-2 border-dashed border-gray-300">
-                <h4 className="font-bold text-lg text-purple-800 mb-4 flex items-center gap-2">
-                    <Target className="w-6 h-6" />
-                    <span className="bg-purple-100 px-2 py-1 rounded">B 模式：指定挑戰專屬流程</span>
-                </h4>
-                <div className="bg-white rounded-lg border border-purple-200 shadow-sm p-5 space-y-4">
-                    <div className="flex gap-4 items-start">
-                        <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
-                        <div>
-                            <h5 className="font-bold text-gray-800">目標鎖定 (Target Lock-on)</h5>
-                            <p className="text-sm text-gray-600 mt-1">
-                                在 <strong>READY</strong> 階段，系統隨機指定一支「目標中獎桿」。<br/>
-                                <span className="text-purple-600">演出：</span>該桿 LED 呈現紅藍爆閃 (Strobe Effect)，螢幕顯示目標位置雷達圖。
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex gap-4 items-start">
-                         <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
-                        <div>
-                            <h5 className="font-bold text-gray-800">投擲限制 (Constraint)</h5>
-                            <p className="text-sm text-gray-600 mt-1">
-                                玩家必須操作天車，將本次抓取的圈圈套入該發光桿位。<br/>
-                                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">提示：若套中非目標桿，視為無效(Miss)。</span>
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex gap-4 items-start">
-                         <div className="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
-                        <div>
-                            <h5 className="font-bold text-gray-800">嚴格判定 (Strict Judgment)</h5>
-                            <p className="text-sm text-gray-600 mt-1">
-                                <strong>JUDGE 階段邏輯變更：</strong><br/>
-                                <code>IF (感測器觸發 == 目標桿ID) THEN 中獎(高倍率獎勵)</code><br/>
-                                <code>ELSE IF (感測器觸發 != 目標桿ID) THEN 失敗(雖套中但無效)</code>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-             </div>
-          </div>
-        )
-      },
-      mechanics: {
-        title: "4. 機制與獎勵 (Mechanics & Rewards)",
-        icon: <Settings className="w-5 h-5" />,
-        content: (
-          <div className="space-y-6">
-            
-            {/* Prize System Block */}
-            <div className="bg-pink-50 border-l-4 border-pink-400 p-4">
-               <h4 className="font-bold text-pink-800 flex items-center gap-2">
-                 <Gift className="w-5 h-5" />
-                 禮品分級與兌換 (Prize System)
-               </h4>
-               <p className="text-sm text-pink-700 mt-1">單次遊戲內根據套中圈圈的數量決定禮品等級。</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Small Prize */}
-                <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
-                    <div className="w-full h-1 bg-green-500 absolute top-0 left-0"></div>
-                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-lg mb-3">小</div>
-                    <h5 className="font-bold text-gray-800 text-lg">小禮品 (Small)</h5>
-                    <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full">
-                       <p className="font-bold text-green-700">達成條件：</p>
-                       <p>套中 <strong>1</strong> 個圈圈</p>
-                       <p className="text-xs text-gray-400 mt-1">(或 B模式指定目標)</p>
-                    </div>
-                </div>
-
-                 {/* Medium Prize */}
-                 <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
-                    <div className="w-full h-1 bg-blue-500 absolute top-0 left-0"></div>
-                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg mb-3">中</div>
-                    <h5 className="font-bold text-gray-800 text-lg">中禮品 (Medium)</h5>
-                    <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full">
-                       <p className="font-bold text-blue-700">達成條件：</p>
-                       <p>單次套中 <strong>2</strong> 個圈圈</p>
-                    </div>
-                </div>
-
-                 {/* Large Prize */}
-                 <div className="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
-                    <div className="w-full h-1 bg-purple-500 absolute top-0 left-0"></div>
-                    <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg mb-3">大</div>
-                    <h5 className="font-bold text-gray-800 text-lg">大禮品 (Large)</h5>
-                    <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full">
-                       <p className="font-bold text-purple-700">達成條件：</p>
-                       <p>單次套中 <strong>3</strong> 個圈圈</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Bank System Block */}
-            <div className="mt-8">
-                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                <h4 className="font-bold text-yellow-800">💰 獨立銀行記帳與限制</h4>
-                <p className="text-sm text-yellow-700 mt-1">
-                    本機台共有 12 支中獎桿，每一支桿子擁有獨立的「記帳銀行」。
-                </p>
-                </div>
-
-                <div className="border rounded-lg overflow-hidden">
-                    <table className="min-w-full bg-white">
-                    <thead className="bg-gray-100 text-gray-600 text-sm">
-                        <tr>
-                        <th className="py-2 px-4 text-left">機制名稱</th>
-                        <th className="py-2 px-4 text-left">邏輯描述</th>
-                        </tr>
-                    </thead>
-                    <tbody className="text-gray-600 text-sm">
-                        <tr className="border-b">
-                        <td className="py-3 px-4 font-bold">保夾待命 (Guaranteed Win)</td>
-                        <td className="py-3 px-4">
-                            當某一中獎桿銀行累積金額 ≥ 保夾門檻，且玩家當次未中獎時，系統將該桿標記為「保夾待命」，下次投擲強制提高中獎率。
-                        </td>
-                        </tr>
-                        {/* New Restriction Rule */}
-                        <tr className="border-b bg-red-50">
-                        <td className="py-3 px-4 font-bold text-red-700 flex items-center gap-1">
-                             <Settings className="w-3 h-3" />
-                             保夾限制 (Mercy Limit)
-                        </td>
-                        <td className="py-3 px-4 text-red-700 font-medium">
-                            透過銀行保夾機制觸發的中獎，<strong>僅限兌換小禮品 (Small Prize)</strong>。
-                            <br/><span className="text-xs font-normal opacity-80">即使系統判定為保夾狀態，單局也只會給予小禮品的獎勵訊號，無法累積至中/大禮品。</span>
-                        </td>
-                        </tr>
-                        <tr className="border-b">
-                        <td className="py-3 px-4 font-bold">銀行歸零 (Reset)</td>
-                        <td className="py-3 px-4">
-                            一旦觸發保夾並成功出獎後，該桿的銀行數值歸零，重新計算。
-                        </td>
-                        </tr>
-                    </tbody>
-                    </table>
-                </div>
-            </div>
-          </div>
-        )
-      },
-      assets: {
-        title: "5. 演出腳本 (Assets)",
-        icon: <Music className="w-5 h-5" />,
-        content: (
-          <div className="space-y-6">
-            <div>
-              <h3 className="font-bold text-gray-800 border-b pb-2 mb-4">音效需求表 (SFX List)</h3>
-              <div className="grid grid-cols-1 gap-2 text-sm">
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>🎵 待機音樂 (Idle BGM)</span>
-                    <span className="text-gray-500">輕快 Loop</span>
-                </div>
-                 <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>🔊 投幣音效</span>
-                    <span className="text-gray-500">標準 Coin In</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>🔊 天車移動音效</span>
-                    <span className="text-gray-500">馬達運轉聲</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>🔊 緊張提示音</span>
-                    <span className="text-gray-500">天車上移至 Drop 前</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>🔊 丟擲音效</span>
-                    <span className="text-gray-500">甩出/破空聲</span>
-                </div>
-                <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>🎉 中獎音效</span>
-                    <span className="text-gray-500">激昂慶祝</span>
-                </div>
-                 <div className="flex justify-between items-center p-2 bg-gray-50 rounded">
-                    <span>💬 鼓勵音效</span>
-                    <span className="text-gray-500">未中獎時播放</span>
-                </div>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="font-bold text-gray-800 border-b pb-2 mb-4">畫面演出 (Visuals)</h3>
-              <ul className="list-disc list-inside text-sm text-gray-700 space-y-2">
-                <li><strong>待機：</strong>遊戲 LOGO + 「投幣開始」閃爍提示。</li>
-                <li><strong>瞄準中：</strong>顯示 15 秒倒數計時條 (Countdown Bar)。</li>
-                <li><strong>取物/丟擲：</strong>畫面特寫 (Close-up) 或慢動作特效，增加張力。</li>
-                <li><strong>結果：</strong>中獎時顯示「WIN!」動畫；未中時顯示保夾進度條更新。</li>
-              </ul>
-            </div>
-          </div>
-        )
-      }
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-100 text-gray-800 font-sans flex flex-col md:flex-row">
-      {/* Print Styles */}
-      <style>{`
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>套圈圈遊戲企劃書 - GDD Viewer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
         @media print {
-          @page { margin: 1.5cm; size: A4; }
-          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          aside, header button, header .no-print { display: none !important; }
-          main { height: auto !important; overflow: visible !important; display: block !important; }
-          .print-break-inside-avoid { break-inside: avoid; }
+            @page { margin: 1. 5cm; size: A4; }
+            body { -webkit-print-color-adjust:  exact; print-color-adjust: exact; }
+            aside, header button, header . no-print { display: none ! important; }
+            main { height: auto ! important; overflow:  visible !important; display: block !important; }
+            .print-break-inside-avoid { break-inside: avoid; }
         }
-      `}</style>
-
-      {/* Sidebar */}
-      <aside className="w-full md:w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col print:hidden">
-        <div className="p-6 border-b border-slate-700">
-          <div className="flex items-center gap-2 mb-1">
-            <Gamepad2 className="text-emerald-400" />
-            <h1 className="font-bold text-xl tracking-wide">GDD Viewer</h1>
-          </div>
-          <p className="text-xs text-slate-400">機台遊戲企劃書管理</p>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {Object.entries(scriptData.sections).map(([key, section]) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${
-                activeTab === key 
-                  ? 'bg-emerald-600 text-white shadow-lg translate-x-1' 
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              {section.icon}
-              <span className="text-sm font-medium">{section.title.split(' (')[0]}</span>
-              {activeTab === key && <ChevronRight className="ml-auto w-4 h-4 opacity-50" />}
-            </button>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-slate-700">
-          <div className="bg-slate-800 rounded p-3 text-xs text-slate-400">
-            <p>最後更新: {scriptData.lastUpdated}</p>
-            <p>版本: {scriptData.version}</p>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto h-screen print:h-auto print:overflow-visible">
-        <header className="bg-white shadow-sm border-b sticky top-0 z-10 px-8 py-4 flex justify-between items-center print:border-none print:relative print:p-0 print:mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">{scriptData.title}</h2>
-            <p className="text-sm text-gray-500">{scriptData.sections[activeTab].title}</p>
-          </div>
-          <div className="flex gap-2 print:hidden">
-            <button 
-              onClick={() => window.print()}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors" 
-              title="列印"
-            >
-              <Printer className="w-4 h-4" />
-              <span className="hidden sm:inline">列印</span>
-            </button>
-             <button className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors" title="分享">
-              <Share2 className="w-4 h-4" />
-            </button>
-            <button 
-              onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded shadow transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              <span>匯出 PDF</span>
-            </button>
-          </div>
-        </header>
-
-        <div className="p-8 max-w-5xl mx-auto print:p-0 print:w-full print:max-w-none">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[500px] animate-fade-in print:shadow-none print:border-none">
-            {/* Header of the Card */}
-            <div className="bg-gray-50 px-8 py-6 border-b border-gray-100 rounded-t-xl flex items-center gap-3 print:bg-white print:px-0 print:py-4">
-               <div className="p-2 bg-white rounded-lg shadow-sm text-emerald-600 print:border print:border-gray-200">
-                 {scriptData.sections[activeTab].icon}
-               </div>
-               <h3 className="text-xl font-bold text-gray-800">{scriptData.sections[activeTab].title}</h3>
+        . animate-fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 text-gray-800 font-sans">
+    <div class="flex flex-col md:flex-row">
+        <!-- Sidebar -->
+        <aside class="w-full md:w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col print:hidden">
+            <div class="p-6 border-b border-slate-700">
+                <div class="flex items-center gap-2 mb-1">
+                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14. 752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <h1 class="font-bold text-xl tracking-wide">GDD Viewer</h1>
+                </div>
+                <p class="text-xs text-slate-400">機台遊戲企劃書管理</p>
             </div>
-            
-            {/* Content Body */}
-            <div className="p-8">
-              {scriptData.sections[activeTab].content}
-            </div>
-          </div>
 
-          <div className="mt-8 flex justify-between text-gray-400 text-sm">
-             <p>© 2024 機台開發部 - 內部機密文件</p>
-             <p>Generated by GDD Viewer</p>
-          </div>
-        </div>
-      </main>
+            <nav class="flex-1 p-4 space-y-2 overflow-y-auto" id="sidebar-nav">
+                <!-- Navigation buttons will be inserted here -->
+            </nav>
+
+            <div class="p-4 border-t border-slate-700">
+                <div class="bg-slate-800 rounded p-3 text-xs text-slate-400">
+                    <p>最後更新: 2024-05-22</p>
+                    <p>版本: v2.2.0 (禮品分級版)</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto h-screen print:h-auto print:overflow-visible">
+            <header class="bg-white shadow-sm border-b sticky top-0 z-10 px-8 py-4 flex justify-between items-center print:border-none print:relative print:p-0 print:mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-800">專案代號：套圈圈 (Ring Toss)</h2>
+                    <p class="text-sm text-gray-500" id="section-subtitle">1. 遊戲概述 (Overview)</p>
+                </div>
+                <div class="flex gap-2 print:hidden">
+                    <button onclick="window.print()" class="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors" title="列印">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                        </svg>
+                        <span class="hidden sm:inline">列印</span>
+                    </button>
+                    <button class="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded transition-colors" title="分享">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8. 684 13.342C8.886 12.938 9 12.482 9 12c0-. 482-. 114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6. 632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                        </svg>
+                    </button>
+                    <button onclick="window.print()" class="flex items-center gap-2 px-4 py-2 text-sm bg-emerald-600 hover:bg-emerald-700 text-white rounded shadow transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/>
+                        </svg>
+                        <span>匯出 PDF</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="p-8 max-w-5xl mx-auto print:p-0 print:w-full print:max-w-none">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 min-h-[500px] animate-fade-in print:shadow-none print:border-none">
+                    <!-- Content Header -->
+                    <div class="bg-gray-50 px-8 py-6 border-b border-gray-100 rounded-t-xl flex items-center gap-3 print:bg-white print:px-0 print:py-4">
+                        <div class="p-2 bg-white rounded-lg shadow-sm text-emerald-600 print:border print:border-gray-200" id="section-icon">
+                            <!-- Icon will be inserted here -->
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800" id="section-title">1. 遊戲概述 (Overview)</h3>
+                    </div>
+                    
+                    <!-- Content Body -->
+                    <div class="p-8" id="content-body">
+                        <!-- Content will be inserted here -->
+                    </div>
+                </div>
+
+                <div class="mt-8 flex justify-between text-gray-400 text-sm">
+                    <p>© 2024 機台開發部 - 內部機密文件</p>
+                    <p>Generated by GDD Viewer</p>
+                </div>
+            </div>
+        </main>
     </div>
-  );
-}
+
+    <script>
+        // SVG Icons
+        const icons = {
+            book: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6. 253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>',
+            cpu: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>',
+            layers: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>',
+            settings: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10. 325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-. 94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+            music: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-. 895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>'
+        };
+
+        // Section data
+        const sections = {
+            overview: {
+                title: "1. 遊戲概述 (Overview)",
+                shortTitle: "遊戲概述",
+                icon: icons.book,
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                            <h3 class="font-bold text-blue-800 mb-2">核心玩法</h3>
+                            <p class="text-blue-900">
+                                本機台為「天車投擲式互動遊戲機」。玩家透過搖桿控制天車 X 軸移動，並利用「上拉慣性甩爪」的物理特性進行放圈。遊戲結合了夾娃娃機的操作手感與套圈圈的技巧挑戰。
+                            </p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="border p-4 rounded bg-white shadow-sm">
+                                <h4 class="font-bold text-gray-700 mb-2">遊戲模式</h4>
+                                <ul class="list-disc list-inside text-gray-600 space-y-1">
+                                    <li><strong>A 模式 (一般)：</strong>自由投擲，依套中數量決定獎品等級。</li>
+                                    <li><strong>B 模式 (挑戰)：</strong>需套中指定閃光桿位，成功即獲獎。</li>
+                                </ul>
+                            </div>
+                            <div class="border p-4 rounded bg-white shadow-sm">
+                                <h4 class="font-bold text-gray-700 mb-2">中獎桿配置 (共12支)</h4>
+                                <div class="flex flex-col gap-2 mt-2">
+                                    <div class="flex justify-center gap-1"><span class="px-2 py-1 bg-gray-200 rounded text-xs">上排 (5支)</span></div>
+                                    <div class="flex justify-center gap-1"><span class="px-2 py-1 bg-gray-200 rounded text-xs">二排 (4支)</span></div>
+                                    <div class="flex justify-center gap-1"><span class="px-2 py-1 bg-gray-200 rounded text-xs">三排 (3支)</span></div>
+                                    <p class="text-xs text-gray-500 text-center mt-1">*每排獨立判定</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            hardware: {
+                title: "2. 角色與硬體 (Hardware)",
+                shortTitle:  "角色與硬體",
+                icon: icons.cpu,
+                content: `
+                    <div class="space-y-6">
+                        <div class="grid grid-cols-1 md: grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded border">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                                    <h4 class="font-bold">天車系統 (Crane)</h4>
+                                </div>
+                                <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
+                                    <li><strong>X 軸移動：</strong>玩家可控左右位移。</li>
+                                    <li><strong>取物模組：</strong>搭載夾圈爪 或 電磁吸圈模組。</li>
+                                    <li><strong>放圈機制：</strong>利用撞擊斜板/上檔產生慣性拋出。</li>
+                                </ul>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded border">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14. 752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/></svg>
+                                    <h4 class="font-bold">玩家操作 (Player)</h4>
+                                </div>
+                                <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
+                                    <li><strong>搖桿：</strong>控制天車左右移動。</li>
+                                    <li><strong>按鈕：</strong>確認放圈 (Trigger)。</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="border rounded-lg overflow-hidden mt-4">
+                            <div class="bg-gray-100 p-3 border-b font-bold text-gray-700">物件定義</div>
+                            <table class="w-full text-sm text-left">
+                                <tbody>
+                                    <tr class="border-b">
+                                        <td class="p-3 bg-gray-50 font-bold w-1/4">圈圈 (Ring)</td>
+                                        <td class="p-3">材質：金屬 (尺寸固定)。屬性：以磁吸為主，亦可規劃夾取。</td>
+                                    </tr>
+                                    <tr class="border-b">
+                                        <td class="p-3 bg-gray-50 font-bold">中獎桿 (Pole)</td>
+                                        <td class="p-3">數量 12 支。每一支桿子皆對應獨立的「記帳銀行」系統。</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `
+            },
+            gameplay: {
+                title: "3. 狀態流程 (State Flow)",
+                shortTitle: "狀態流程",
+                icon: icons.layers,
+                content: `
+                    <div class="space-y-6">
+                        <div class="flex flex-wrap gap-2 text-xs text-gray-500 mb-4 justify-center bg-gray-50 p-2 rounded">
+                            <span>IDLE</span> → <span>WAIT</span> → <span>READY</span> → <span>AIM</span> → <span>PICKUP</span> → <span>MOVE</span> → <span>DROP</span> → <span>JUDGE</span> → <span>RESULT</span>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="relative pl-6 border-l-2 border-gray-300">
+                                <span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-gray-400"></span>
+                                <h5 class="font-bold text-gray-800">0-2.  待機與準備 (Idle & Ready)</h5>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <strong>IDLE:</strong> 顯示 LOGO，中獎桿呼吸燈閃爍，重置天車。<br/>
+                                    <strong>WAIT_COIN:</strong> 偵測投幣，顯示操作提示。<br/>
+                                    <strong>READY:</strong> 選擇模式 (A: 一般 / B:挑戰)，玩家移動搖桿，播放開始音樂。
+                                </p>
+                            </div>
+
+                            <div class="relative pl-6 border-l-2 border-indigo-500">
+                                <span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-indigo-500"></span>
+                                <h5 class="font-bold text-indigo-900">3-6. 操作與動作 (Action)</h5>
+                                <div class="mt-2 space-y-3">
+                                    <div class="bg-indigo-50 p-2 rounded text-sm">
+                                        <span class="font-bold text-indigo-700">[3] AIMING 瞄準: </span> 
+                                        <span class="text-gray-700 ml-1">限時 15秒。畫面顯示倒數條，音效配合天車移動。</span>
+                                    </div>
+                                    <div class="bg-indigo-50 p-2 rounded text-sm">
+                                        <span class="font-bold text-indigo-700">[4] PICKUP 取圈: </span> 
+                                        <span class="text-gray-700 ml-1">下爪夾取/吸取圈圈。畫面顯示特寫動畫。</span>
+                                    </div>
+                                    <div class="bg-indigo-50 p-2 rounded text-sm">
+                                        <span class="font-bold text-indigo-700">[5] MOVE 上移:</span> 
+                                        <span class="text-gray-700 ml-1">天車自動上移，畫面聚焦，播放緊張音效。</span>
+                                    </div>
+                                    <div class="bg-indigo-50 p-2 rounded text-sm">
+                                        <span class="font-bold text-indigo-700">[6] DROP 丟圈:</span> 
+                                        <span class="text-gray-700 ml-1">撞擊斜板/上檔 → 開閘門 → 利用慣性丟出圈圈。</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="relative pl-6 border-l-2 border-orange-400">
+                                <span class="absolute -left-1.5 top-1 w-3 h-3 rounded-full bg-orange-400"></span>
+                                <h5 class="font-bold text-gray-800">7-10. 判定與結算 (Result)</h5>
+                                <p class="text-sm text-gray-600 mt-1">
+                                    <strong>JUDGE:</strong> 500ms 判定時間窗，感測器偵測是否套中。<br/>
+                                    <strong>RESULT:</strong> 中獎(亮燈/WIN動畫) 或 未中(保夾條更新/鼓勵音效)。<br/>
+                                    <strong>SETTLE:</strong> 記錄金額，更新該桿銀行，判斷是否觸發保夾。
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-6 border-t-2 border-dashed border-gray-300">
+                            <h4 class="font-bold text-lg text-purple-800 mb-4 flex items-center gap-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span class="bg-purple-100 px-2 py-1 rounded">B 模式：指定挑戰專屬流程</span>
+                            </h4>
+                            <div class="bg-white rounded-lg border border-purple-200 shadow-sm p-5 space-y-4">
+                                <div class="flex gap-4 items-start">
+                                    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
+                                    <div>
+                                        <h5 class="font-bold text-gray-800">目標鎖定 (Target Lock-on)</h5>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            在 <strong>READY</strong> 階段，系統隨機指定一支「目標中獎桿」。<br/>
+                                            <span class="text-purple-600">演出：</span>該桿 LED 呈現紅藍爆閃 (Strobe Effect)，螢幕顯示目標位置雷達圖。
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
+                                    <div>
+                                        <h5 class="font-bold text-gray-800">投擲限制 (Constraint)</h5>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            玩家必須操作天車，將本次抓取的圈圈套入該發光桿位。<br/>
+                                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">提示：若套中非目標桿，視為無效(Miss)。</span>
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-4 items-start">
+                                    <div class="w-8 h-8 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
+                                    <div>
+                                        <h5 class="font-bold text-gray-800">嚴格判定 (Strict Judgment)</h5>
+                                        <p class="text-sm text-gray-600 mt-1">
+                                            <strong>JUDGE 階段邏輯變更：</strong><br/>
+                                            <code class="text-xs bg-gray-100 px-1">IF (感測器觸發 == 目標桿ID) THEN 中獎(高倍率獎勵)</code><br/>
+                                            <code class="text-xs bg-gray-100 px-1">ELSE IF (感測器觸發 != 目標桿ID) THEN 失敗(雖套中但無效)</code>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            mechanics: {
+                title: "4. 機制與獎勵 (Mechanics & Rewards)",
+                shortTitle:  "機制與獎勵",
+                icon: icons.settings,
+                content: `
+                    <div class="space-y-6">
+                        <div class="bg-pink-50 border-l-4 border-pink-400 p-4">
+                            <h4 class="font-bold text-pink-800 flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5. 5A2.5 2.5 0 109. 5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg>
+                                禮品分級與兌換 (Prize System)
+                            </h4>
+                            <p class="text-sm text-pink-700 mt-1">單次遊戲內根據套中圈圈的數量決定禮品等級。</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md: grid-cols-3 gap-4">
+                            <div class="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                                <div class="w-full h-1 bg-green-500 absolute top-0 left-0"></div>
+                                <div class="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-lg mb-3">小</div>
+                                <h5 class="font-bold text-gray-800 text-lg">小禮品 (Small)</h5>
+                                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full">
+                                    <p class="font-bold text-green-700">達成條件：</p>
+                                    <p>套中 <strong>1</strong> 個圈圈</p>
+                                    <p class="text-xs text-gray-400 mt-1">(或 B模式指定目標)</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                                <div class="w-full h-1 bg-blue-500 absolute top-0 left-0"></div>
+                                <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg mb-3">中</div>
+                                <h5 class="font-bold text-gray-800 text-lg">中禮品 (Medium)</h5>
+                                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full">
+                                    <p class="font-bold text-blue-700">達成條件：</p>
+                                    <p>單次套中 <strong>2</strong> 個圈圈</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-white p-4 rounded-lg border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                                <div class="w-full h-1 bg-purple-500 absolute top-0 left-0"></div>
+                                <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold text-lg mb-3">大</div>
+                                <h5 class="font-bold text-gray-800 text-lg">大禮品 (Large)</h5>
+                                <div class="mt-3 text-sm text-gray-600 bg-gray-50 p-2 rounded w-full">
+                                    <p class="font-bold text-purple-700">達成條件：</p>
+                                    <p>單次套中 <strong>3</strong> 個圈圈</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8">
+                            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+                                <h4 class="font-bold text-yellow-800">💰 獨立銀行記帳與限制</h4>
+                                <p class="text-sm text-yellow-700 mt-1">
+                                    本機台共有 12 支中獎桿，每一支桿子擁有獨立的「記帳銀行」。
+                                </p>
+                            </div>
+
+                            <div class="border rounded-lg overflow-hidden">
+                                <table class="min-w-full bg-white">
+                                    <thead class="bg-gray-100 text-gray-600 text-sm">
+                                        <tr>
+                                            <th class="py-2 px-4 text-left">機制名稱</th>
+                                            <th class="py-2 px-4 text-left">邏輯描述</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="text-gray-600 text-sm">
+                                        <tr class="border-b">
+                                            <td class="py-3 px-4 font-bold">保夾待命 (Guaranteed Win)</td>
+                                            <td class="py-3 px-4">
+                                                當某一中獎桿銀行累積金額 ≥ 保夾門檻，且玩家當次未中獎時，系統將該桿標記為「保夾待命」，下次投擲強制提高中獎率。
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b bg-red-50">
+                                            <td class="py-3 px-4 font-bold text-red-700 flex items-center gap-1">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10. 325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002. 573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-. 826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+                                                保夾限制 (Mercy Limit)
+                                            </td>
+                                            <td class="py-3 px-4 text-red-700 font-medium">
+                                                透過銀行保夾機制觸發的中獎，<strong>僅限兌換小禮品 (Small Prize)</strong>。
+                                                <br/><span class="text-xs font-normal opacity-80">即使系統判定為保夾狀態，單局也只會給予小禮品的獎勵訊號，無法累積至中/大禮品。</span>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-b">
+                                            <td class="py-3 px-4 font-bold">銀行歸零 (Reset)</td>
+                                            <td class="py-3 px-4">
+                                                一旦觸發保夾並成功出獎後，該桿的銀行數值歸零，重新計算。
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `
+            },
+            assets: {
+                title: "5. 演出腳本 (Assets)",
+                shortTitle: "演出腳本",
+                icon: icons.music,
+                content: `
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="font-bold text-gray-800 border-b pb-2 mb-4">音效需求表 (SFX List)</h3>
+                            <div class="grid grid-cols-1 gap-2 text-sm">
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>🎵 待機音樂 (Idle BGM)</span>
+                                    <span class="text-gray-500">輕快 Loop</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>🔊 投幣音效</span>
+                                    <span class="text-gray-500">標準 Coin In</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>🔊 天車移動音效</span>
+                                    <span class="text-gray-500">馬達運轉聲</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>🔊 緊張提示音</span>
+                                    <span class="text-gray-500">天車上移至 Drop 前</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>🔊 丟擲音效</span>
+                                    <span class="text-gray-500">甩出/破空聲</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>🎉 中獎音效</span>
+                                    <span class="text-gray-500">激昂慶祝</span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                    <span>💬 鼓勵音效</span>
+                                    <span class="text-gray-500">未中獎時播放</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h3 class="font-bold text-gray-800 border-b pb-2 mb-4">畫面演出 (Visuals)</h3>
+                            <ul class="list-disc list-inside text-sm text-gray-700 space-y-2">
+                                <li><strong>待機：</strong>遊戲 LOGO + 「投幣開始」閃爍提示。</li>
+                                <li><strong>瞄準中：</strong>顯示 15 秒倒數計時條 (Countdown Bar)。</li>
+                                <li><strong>取物/丟擲：</strong>畫面特寫 (Close-up) 或慢動作特效，增加張力。</li>
+                                <li><strong>結果：</strong>中獎時顯示「WIN! 」動畫；未中時顯示保夾進度條更新。</li>
+                            </ul>
+                        </div>
+                    </div>
+                `
+            }
+        };
+
+        let currentTab = 'overview';
+
+        // Initialize navigation
+        function initNavigation() {
+            const nav = document.getElementById('sidebar-nav');
+            
+            Object.entries(sections).forEach(([key, section]) => {
+                const button = document.createElement('button');
+                button.className = `w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-left ${
+                    currentTab === key 
+                        ? 'bg-emerald-600 text-white shadow-lg translate-x-1' 
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                }`;
+                button.innerHTML = `
+                    ${section.icon}
+                    <span class="text-sm font-medium">${section.shortTitle}</span>
+                    ${currentTab === key ? '<svg class="ml-auto w-4 h-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>' : ''}
+                `;
+                button.onclick = () => switchTab(key);
+                nav. appendChild(button);
+            });
+        }
+
+        // Switch tab
+        function switchTab(tab) {
+            currentTab = tab;
+            const section = sections[tab];
+            
+            // Update content
+            document.getElementById('section-title').textContent = section.title;
+            document.getElementById('section-subtitle').textContent = section.title;
+            document.getElementById('section-icon').innerHTML = section.icon;
+            document.getElementById('content-body').innerHTML = section.content;
+            
+            // Update navigation
+            const nav = document.getElementById('sidebar-nav');
+            nav.innerHTML = '';
+            initNavigation();
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initNavigation();
+            switchTab('overview');
+        });
+    </script>
+</body>
+</html>
